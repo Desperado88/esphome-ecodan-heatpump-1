@@ -8,6 +8,9 @@ constexpr uint8_t ecodan::commands::command_hot_water_setpoint::packetMask[PACKE
 constexpr uint8_t ecodan::commands::command_zone1_room_temp_setpoint::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_zone1_flow_temp_setpoint::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_zone1_room_temp::packetMask[PACKET_BUFFER_SIZE];
+constexpr uint8_t ecodan::commands::command_zone2_room_temp_setpoint::packetMask[PACKET_BUFFER_SIZE];
+constexpr uint8_t ecodan::commands::command_zone2_flow_temp_setpoint::packetMask[PACKET_BUFFER_SIZE];
+constexpr uint8_t ecodan::commands::command_zone2_room_temp::packetMask[PACKET_BUFFER_SIZE];
 
 namespace esphome {
 namespace ecodan_ {
@@ -257,6 +260,27 @@ void EcodanHeatpump::setRemoteTemperature(float value) {
     sendBuffer[command_zone1_room_temp::varIndex - 1] = 0x00;
     sendBuffer[command_zone1_room_temp::varIndex + 1] = 0x80;
   }
+  this->sendSerialPacket(sendBuffer);
+}
+
+void EcodanHeatpump::setRemoteTemperatureZone2(float value) {
+  uint8_t sendBuffer[PACKET_BUFFER_SIZE];
+  memcpy(sendBuffer, command_zone2_room_temp::packetMask, PACKET_BUFFER_SIZE);
+
+  if (value > 0) {
+    ESP_LOGI(TAG, "Zone 2 temperature set to: %f", value);
+
+    value = round(value * 2) / 2;
+    uint8_t temp1 = 3 + ((value - 10) * 2);
+    sendBuffer[command_zone2_room_temp::varIndex] = temp1;
+    uint8_t temp2 = (value * 2) + 128;
+    sendBuffer[command_zone2_room_temp::varIndex + 1] = temp2;
+  } else {
+    ESP_LOGI(TAG, "Zone 2 temperature control back to builtin sensor");
+    sendBuffer[command_zone2_room_temp::varIndex - 1] = 0x00;
+    sendBuffer[command_zone2_room_temp::varIndex + 1] = 0x80;
+  }
+
   this->sendSerialPacket(sendBuffer);
 }
 
